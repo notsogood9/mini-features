@@ -142,6 +142,7 @@ Then implement the logic.
 ============================================================
 */
 
+
 // const post = {
 //   id,
 //   content,
@@ -153,16 +154,17 @@ Then implement the logic.
 let id = 0;
 
 function createPost(content, selectedPlatforms) {
-  if ( selectedPlatforms=== null || selectedPlatforms=== undefined) {
-    throw new Error ("Invalid Name")
+  if (selectedPlatforms === null || selectedPlatforms === undefined) {
+    throw new Error("Invalid Name");
   }
-  
+
   const storedID = id++;
   const storedContent = content;
   const storedSelectedPlatforms = selectedPlatforms;
   const createdAt = new Date();
-  const individualPlatformStatus = {}
-  
+
+  const individualPlatformStatus = {};
+
   for (const i of selectedPlatforms) {
     individualPlatformStatus[i] = {
       currentState: "not started yet",
@@ -170,70 +172,156 @@ function createPost(content, selectedPlatforms) {
       explaination4failure: null,
     };
   }
-  
-  const overallStatus = { Status: "not started yet" }
-  const result= {
+
+  const overallStatus = {
+    Status: "not started yet",
+  };
+
+  const result = {
     storedID,
     storedContent,
     storedSelectedPlatforms,
     createdAt,
     individualPlatformStatus,
     overallStatus,
-  }
+  };
+
   return result;
 }
 
-const supportedPlatforms = ["Linkedin", "X", "Reddit",]
+
+// --------------------------------------------------
+// SUPPORTED PLATFORMS
+// --------------------------------------------------
+
+const supportedPlatforms = ["Linkedin", "X", "Reddit"];
+
 Object.freeze(supportedPlatforms);
 
-function postValidation(result) {
-  if (result.storedContent === null || result.storedContent === undefined || result.storedContent === "") {
+
+// --------------------------------------------------
+// VALIDATION
+// --------------------------------------------------
+
+function postValidation(post) {
+  if (
+    post.storedContent === null ||
+    post.storedContent === undefined ||
+    post.storedContent === ""
+  ) {
     throw new Error("No content!");
   }
-  if (result.storedSelectedPlatforms.length === 0) {
-    throw new Error("Atleast one platform required")
+
+  if (post.storedSelectedPlatforms.length === 0) {
+    throw new Error("At least one platform required");
   }
-  
-  const platformRules ={
+
+  const platformRules = {
     X: {
       charLimit: 100,
-      ageLimit: 18
+      ageLimit: 18,
     },
+
     Linkedin: {
       charLimit: 100,
       ageLimit: 16,
     },
+
     Reddit: {
       charLimit: 120,
-      ageLimit: 12
-    }
-  }
-    
-  for (const i of result.storedSelectedPlatforms) {
-    if (!supportedPlatforms.includes(i)) {
-      result.individualPlatformStatus[i] = {
+      ageLimit: 12,
+    },
+  };
+
+  for (const platform of post.storedSelectedPlatforms) {
+
+    if (!supportedPlatforms.includes(platform)) {
+
+      post.individualPlatformStatus[platform] = {
         currentState: "Validation Failed",
         isValidationPassed: false,
         explaination4failure: "Not in the supported platform",
-      }
-    }
-    
-    else {
-      if (result.storedContent.length > platformRules[i].charLimit) {
-        result.individualPlatformStatus[i] = {
-          currentState: "Validation failed",
+      };
+
+    } else {
+
+      if (post.storedContent.length > platformRules[platform].charLimit) {
+
+        post.individualPlatformStatus[platform] = {
+          currentState: "Validation Failed",
           isValidationPassed: false,
-          explaination4failure:"due to long content",
-        }         
-      }
-      else  {
-        result.individualPlatformStatus[i] = {
-          currentState: "Validation Suceeded",
+          explaination4failure: "Due to long content",
+        };
+
+      } else {
+
+        post.individualPlatformStatus[platform] = {
+          currentState: "Validation Succeeded",
           isValidationPassed: true,
-          explaination4failure:"none",
-        } 
+          explaination4failure: "none",
+        };
+
       }
     }
   }
-  return result.individualPlatformStatus;
+
+  return post;
 }
+
+
+// --------------------------------------------------
+// PUBLISH
+// --------------------------------------------------
+
+function publishPost(post) {
+
+  const reqArr = Object.entries(post.individualPlatformStatus);
+
+  reqArr.forEach(function (state) {
+
+    if (state[1].isValidationPassed === null) {
+
+      state[1].currentState = "Validation-NULL";
+
+    } else {
+
+      if (state[1].isValidationPassed === true) {
+        state[1].currentState = "Published";
+      }
+
+      if (state[1].isValidationPassed === false) {
+        state[1].currentState = "Not Published";
+      }
+
+    }
+  });
+
+  return post;
+}
+
+
+// --------------------------------------------------
+// PIPELINE
+// --------------------------------------------------
+
+const mainValue01 = createPost(
+  "yo, this is me, your creator",
+  [
+    "Telegram",
+    "Instagram",
+    "X",
+    "Reddit",
+    "",
+    "Linkedin",
+    "HikeMessenger",
+    "Whatsapp"
+  ]
+);
+
+const mainValue02 = postValidation(mainValue01);
+
+const mainValue03 = publishPost(mainValue02);
+
+console.log(mainValue03);
+console.log(mainValue01)
+console.log(mainValue01 === mainValue02);
